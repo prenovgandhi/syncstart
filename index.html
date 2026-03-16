@@ -28,9 +28,9 @@
   --radius-sm: 8px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-body { font-family: 'DM Sans', sans-serif; background: #F0EDE8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+body { font-family: 'DM Sans', sans-serif; background: #E8EEF8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.phone { width: 375px; height: 720px; background: var(--surface); border-radius: 44px; border: 1.5px solid rgba(255,255,255,0.1); box-shadow: 0 0 0 8px rgba(255,255,255,0.02), 0 24px 64px rgba(0,0,0,0.7); overflow: hidden; position: relative; }
+.phone { width: 375px; height: 720px; background: var(--surface); border-radius: 44px; border: 1.5px solid rgba(255,255,255,0.15); box-shadow: 0 0 0 10px rgba(100,130,200,0.08), 0 24px 64px rgba(20,40,100,0.25); overflow: hidden; position: relative; }
 .phone::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 110px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 100; }
 .screen { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transform: translateX(30px); transition: opacity 0.28s ease, transform 0.28s ease; background: var(--surface); }
 .screen.active { opacity: 1; pointer-events: all; transform: translateX(0); }
