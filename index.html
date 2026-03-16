@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SyncStart – MSU Study Groups</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0D0D0F;
+  --surface: #161618;
+  --surface2: #1E1E21;
+  --surface3: #262629;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #F0EFE9;
+  --text2: #9B9A96;
+  --text3: #5C5B58;
+  --accent: #4B8EF0;
+  --accent-light: rgba(75,142,240,0.15);
+  --accent2: #3DB87A;
+  --accent2-light: rgba(61,184,122,0.15);
+  --warn: #F0A050;
+  --warn-light: rgba(240,160,80,0.15);
+  --danger: #E05555;
+  --danger-light: rgba(224,85,85,0.15);
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'DM Sans', sans-serif; background: #F0EDE8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.phone-wrap { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.phone { width: 375px; height: 720px; background: var(--surface); border-radius: 44px; border: 1.5px solid rgba(255,255,255,0.1); box-shadow: 0 0 0 8px rgba(255,255,255,0.02), 0 24px 64px rgba(0,0,0,0.7); overflow: hidden; position: relative; }
+.phone::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 110px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 100; }
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transform: translateX(30px); transition: opacity 0.28s ease, transform 0.28s ease; background: var(--surface); }
+.screen.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+.screen.exit { opacity: 0; transform: translateX(-30px); transition: opacity 0.2s ease, transform 0.2s ease; }
+.scroll-area { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.scroll-area::-webkit-scrollbar { display: none; }
+.bottomnav { height: 68px; border-top: 1px solid var(--border); background: rgba(22,22,24,0.97); display: flex; align-items: center; justify-content: space-around; padding: 0 8px 8px; flex-shrink: 0; }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; font-weight: 500; color: var(--text3); cursor: pointer; padding: 6px 10px; border-radius: 12px; transition: color 0.15s, background 0.15s; border: none; background: none; font-family: 'DM Sans', sans-serif; }
+.nav-item.active { color: var(--accent); }
+.nav-item:hover { background: var(--surface2); }
+.nav-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.page-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); line-height: 1.1; }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+.card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
+.card:active { transform: scale(0.98); }
+.card:hover { border-color: var(--border2); }
+.card-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.card-sub { font-size: 12px; color: var(--text2); margin-bottom: 8px; line-height: 1.4; }
+.tags { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.tag { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; background: var(--accent-light); color: var(--accent); }
+.tag.green { background: var(--accent2-light); color: var(--accent2); }
+.tag.amber { background: var(--warn-light); color: var(--warn); }
+.tag.red { background: var(--danger-light); color: var(--danger); }
+.tag.gray { background: var(--surface3); color: var(--text2); }
+.searchbar { display: flex; align-items: center; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 14px; color: var(--text2); cursor: text; margin-bottom: 14px; }
+.chips { display: flex; gap: 7px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border2); white-space: nowrap; cursor: pointer; background: var(--surface2); color: var(--text2); transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+.chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.input-group { margin-bottom: 14px; }
+.input-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 5px; display: block; }
+input[type=text], input[type=email], input[type=password], textarea, select { width: 100%; padding: 11px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); outline: none; transition: border-color 0.15s; }
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+textarea { resize: none; line-height: 1.5; }
+select option { background: #1E1E21; }
+.btn { width: 100%; padding: 13px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; border: none; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; }
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: #fff; margin-bottom: 10px; }
+.btn-primary:hover { background: #3a7de0; }
+.btn-outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+.btn-outline:hover { background: var(--accent-light); }
+.avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.av-blue { background: var(--accent-light); color: var(--accent); }
+.av-green { background: var(--accent2-light); color: var(--accent2); }
+.av-amber { background: var(--warn-light); color: var(--warn); }
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+.join-btn { font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--accent); color: var(--accent); background: none; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; white-space: nowrap; }
+.join-btn:hover { background: var(--accent-light); }
+.join-btn.full { border-color: var(--border2); color: var(--text3); pointer-events: none; }
+.back-btn { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 500; color: var(--accent); background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; padding: 0; }
+.tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+.tab { flex: 1; text-align: center; padding: 10px 0; font-size: 13px; font-weight: 500; color: var(--text3); border-bottom: 2px solid transparent; cursor: pointer; transition: all 0.15s; }
+.tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+.stat-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.stat-card { flex: 1; background: var(--surface3); border-radius: var(--radius-sm); padding: 10px 12px; text-align: center; }
+.stat-num { font-size: 20px; font-weight: 600; color: var(--text); }
+.stat-lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.member-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.member-row:last-child { border-bottom: none; }
+.member-info { flex: 1; }
+.member-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.member-sub { font-size: 12px; color: var(--text3); }
+.header-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px 8px; flex-shrink: 0; }
+.hero { background: linear-gradient(135deg, #1a2f50 0%, #0f1e36 100%); padding: 20px 20px 24px; position: relative; overflow: hidden; flex-shrink: 0; }
+.hero::after { content: ''; position: absolute; right: -30px; top: -30px; width: 140px; height: 140px; border-radius: 50%; background: rgba(75,142,240,0.08); }
+.pad { padding: 16px 20px; }
+.explore-category { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; cursor: pointer; transition: border-color 0.15s; }
+.explore-category:hover { border-color: var(--border2); }
+.explore-cat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; font-size: 18px; }
+.explore-cat-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.explore-cat-sub { font-size: 12px; color: var(--text2); }
+.trending-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.15s; }
+.trending-card:hover { border-color: var(--border2); }
+.trending-rank { font-size: 18px; font-weight: 600; color: var(--text3); min-width: 24px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.15); cursor: pointer; transition: all 0.2s; }
+.dot.active { width: 18px; border-radius: 4px; background: #4B8EF0; }
+</style>
+</head>
+<body>
+<div class="phone-wrap">
+  <div class="phone">
+
+    <!-- LOGIN -->
+    <div class="screen active" id="s-login">
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 28px 28px;">
+        <div style="margin-bottom:32px;">
+          <div style="width:56px;height:56px;background:var(--accent);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 4px 24px rgba(75,142,240,0.4);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="7" r="4" stroke="#fff" stroke-width="1.8"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
+          <div class="page-title">SyncStart</div>
+          <div style="font-size:14px;color:var(--text2);margin-top:4px;">Find your study crew at MSU</div>
+        </div>
+        <div class="input-group"><label class="input-label">MSU Email</label><input type="email" value="prenov@msu.edu"></div>
+        <div class="input-group"><label class="input-label">Password</label><input type="password" value="password"></div>
+        <div style="text-align:right;font-size:12px;color:var(--accent);margin-bottom:20px;cursor:pointer;">Forgot password?</div>
+        <button class="btn btn-primary" onclick="nav('s-home')">Sign in</button>
+        <button class="btn btn-outline" onclick="nav('s-register')">Create account</button>
+        <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--text3);">By signing in you agree to our Terms &amp; Privacy Policy</div>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="screen" id="s-register">
+      <div style="height:44px;flex-shrink:0;"></div>
+      <div class="header-row">
+        <button class="back-btn" onclick="nav('s-login')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Back</button>
+        <div style="font-size:14px;font-weight:600;color:var(--text);">Create account</div>
+        <div style="width:50px;"></div>
+      </div>
+      <div class="scroll-area"><div class="pad">
+        <div style="margin-bottom:20px;"><div class="page-title" style="font-size:22px;">Join SyncStart</div><div style="font-size:13px;color:var(--text2);margin-top:4px;">Connect with MSU students</div></div>
+        <div class="input-group"><label class="input-label">Full name</label><input type="text" placeholder="Prenov Gandhi"></div>
+        <div class="input-group"><label class="input-label">MSU Email</label><input type="email" placeholder="netid@msu.edu"></div>
+        <div class="input-group"><label class="input-label">Major</label><select><option>Computer Science</option><option>Computer Engineering</option><option>Mathematics</option><option>Physics</option><option>Other</option></select></div>
+        <div class="input-group"><label class="input-label">Year</label><select><option>Freshman</option><option>Sophomore</option><option selected>Junior</option><option>Senior</option><option>Graduate</option></select></div>
+        <div class="input-group"><label class="input-label">Password</label><input type="password" placeholder="Min. 8 characters"></div>
+        <button class="btn btn-primary" onclick="nav('s-home')" style="margin-top:8px;">Create account</button>
+        <div style="text-align:center;font-size:13px;color:var(--text2);margin-top:14px;">Already have an account? <span style="color:var(--accent);cursor:pointer;" onclick="nav('s-login')">Sign in</span></div>
+      </div></div>
+    </div>
+
+    <!-- HOME -->
+    <div class="screen" id="s-home">
+      <div class="hero" style="padding-top:48px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:4px;">Good evening 👋</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#fff;">Hey, Prenov</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:4px;">3 groups match your courses</div>
+          </div>
+          <div class="avatar av-blue" style="background:rgba(75,142,240,0.2);color:var(--accent);width:42px;height:42px;font-size:14px;cursor:pointer;" onclick="nav('s-profile')">PG</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;overflow-x:auto;padding-bottom:2px;">
+          <div class="chip on" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.2);">All</div>
+          <div class="chip" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.12);">CSE</div>
+          <div class="chip" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.12);">Math</div>
+          <div class="chip" style="background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.6);border-color:rgba(255,255,255,0.12);">Physics</div>
+        </div>
+      </div>
+      <div class="scroll-area"><div class="pad">
+        <div class="searchbar" onclick="nav('s-browse')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.8"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Search groups, courses, topics...</div>
+        <div class="section-label">Recommended for you</div>
+        <div class="card" onclick="nav('s-detail')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">CSE 404 · ML Study Group</div><span class="tag green">Open</span></div>
+          <div class="card-sub">Tue/Thu 6–8pm · Engineering Building 1234</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">Machine Learning</span><span class="tag">Python</span></div><div style="font-size:11px;color:var(--text3);">4/6</div></div>
+        </div>
+        <div class="card" onclick="nav('s-detail')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">CSE 476 · Mobile Dev Crew</div><span class="tag amber">2 spots</span></div>
+          <div class="card-sub">Wed 5–7pm · Remote (Discord)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">Android</span><span class="tag">Java</span></div><div style="font-size:11px;color:var(--text3);">4/6</div></div>
+        </div>
+        <div class="section-label" style="margin-top:4px;">Recently active</div>
+        <div class="card" onclick="nav('s-detail')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">Algorithms Prep</div><span class="tag green">Open</span></div>
+          <div class="card-sub">Sat 2pm · Wells Hall 120</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">CSE 331</span><span class="tag">LeetCode</span></div><div style="font-size:11px;color:var(--text3);">3/8</div></div>
+        </div>
+        <div class="card" onclick="nav('s-detail')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">Calc III Finals Grind</div><span class="tag amber">1 spot</span></div>
+          <div class="card-sub">Mon/Wed 7pm · Remote (Zoom)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">MTH 234</span></div><div style="font-size:11px;color:var(--text3);">5/6</div></div>
+        </div>
+      </div></div>
+      <div class="bottomnav">
+        <button class="nav-item active" onclick="nav('s-home')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" stroke="currentColor" stroke-width="1.8"/><path d="M9 21V12h6v9" stroke="currentColor" stroke-width="1.8"/></svg></div>Home</button>
+        <button class="nav-item" onclick="nav('s-browse')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg></div>Browse</button>
+        <button class="nav-item" onclick="nav('s-create')"><div class="nav-icon" style="width:36px;height:36px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>Create</button>
+        <button class="nav-item" onclick="nav('s-explore')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>Explore</button>
+        <button class="nav-item" onclick="nav('s-profile')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>Profile</button>
+      </div>
+    </div>
+
+    <!-- BROWSE -->
+    <div class="screen" id="s-browse">
+      <div style="height:44px;flex-shrink:0;"></div>
+      <div style="padding:8px 20px 0;flex-shrink:0;">
+        <div style="margin-bottom:10px;"><div class="page-title" style="font-size:22px;">Browse Groups</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">12 groups available this semester</div></div>
+        <div class="searchbar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.8"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Search by course, topic, or name...</div>
+        <div class="chips"><div class="chip on">All</div><div class="chip">Open</div><div class="chip">My dept</div><div class="chip">In-person</div><div class="chip">Remote</div></div>
+        <div class="tabs">
+          <div class="tab on">All <span style="background:var(--accent-light);color:var(--accent);font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;">12</span></div>
+          <div class="tab">Open <span style="background:var(--accent2-light);color:var(--accent2);font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;">8</span></div>
+          <div class="tab">Joined <span style="background:var(--surface3);color:var(--text3);font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px;">2</span></div>
+        </div>
+      </div>
+      <div class="scroll-area"><div class="pad" style="padding-top:4px;">
+        <div class="card" onclick="nav('s-detail')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">CSE 404 · ML Study Group</div><span class="tag green">Open</span></div><div class="card-sub">Tue/Thu 6–8pm · Engineering Building</div><div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">ML</span><span class="tag">Python</span><span class="tag gray">4/6</span></div><button class="join-btn">Join</button></div></div>
+        <div class="card" onclick="nav('s-detail')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">CSE 476 · Mobile Dev Crew</div><span class="tag amber">2 spots</span></div><div class="card-sub">Wed 5–7pm · Remote (Discord)</div><div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">Android</span><span class="tag gray">4/6</span></div><button class="join-btn">Join</button></div></div>
+        <div class="card" onclick="nav('s-detail')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">Algorithms Deep Dive</div><span class="tag red">Full</span></div><div class="card-sub">Sat 2pm · Wells Hall 120</div><div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">CSE 331</span><span class="tag gray">6/6</span></div><button class="join-btn full">Full</button></div></div>
+        <div class="card" onclick="nav('s-detail')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">Calc III Finals Grind</div><span class="tag amber">1 spot</span></div><div class="card-sub">Mon/Wed 7pm · Remote (Zoom)</div><div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">MTH 234</span><span class="tag gray">5/6</span></div><button class="join-btn">Join</button></div></div>
+        <div class="card" onclick="nav('s-detail')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">Organic Chem Study Hall</div><span class="tag green">Open</span></div><div class="card-sub">Sun 3pm · Chemistry Building 100</div><div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">CEM 251</span><span class="tag gray">2/8</span></div><button class="join-btn">Join</button></div></div>
+      </div></div>
+      <div class="bottomnav">
+        <button class="nav-item" onclick="nav('s-home')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" stroke="currentColor" stroke-width="1.8"/><path d="M9 21V12h6v9" stroke="currentColor" stroke-width="1.8"/></svg></div>Home</button>
+        <button class="nav-item active" onclick="nav('s-browse')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg></div>Browse</button>
+        <button class="nav-item" onclick="nav('s-create')"><div class="nav-icon" style="width:36px;height:36px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>Create</button>
+        <button class="nav-item" onclick="nav('s-explore')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>Explore</button>
+        <button class="nav-item" onclick="nav('s-profile')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>Profile</button>
+      </div>
+    </div>
+
+    <!-- CREATE -->
+    <div class="screen" id="s-create">
+      <div style="height:44px;flex-shrink:0;"></div>
+      <div class="header-row">
+        <button class="back-btn" onclick="nav('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Back</button>
+        <div style="font-size:14px;font-weight:600;color:var(--text);">New Group</div>
+        <div style="width:50px;"></div>
+      </div>
+      <div class="scroll-area"><div class="pad">
+        <div style="margin-bottom:20px;"><div class="page-title" style="font-size:22px;">Create a group</div><div style="font-size:13px;color:var(--text2);margin-top:4px;">Set up your study session</div></div>
+        <div class="input-group"><label class="input-label">Group name</label><input type="text" placeholder="e.g. CSE 404 Finals Prep"></div>
+        <div class="input-group"><label class="input-label">Course / Subject</label><input type="text" placeholder="e.g. CSE 404 – Machine Learning"></div>
+        <div class="input-group"><label class="input-label">Description</label><textarea rows="3" placeholder="What will your group focus on?"></textarea></div>
+        <div style="display:flex;gap:10px;">
+          <div class="input-group" style="flex:1;"><label class="input-label">Day(s)</label><select><option>Tue / Thu</option><option>Mon / Wed</option><option>Saturday</option><option>Flexible</option></select></div>
+          <div class="input-group" style="flex:1;"><label class="input-label">Time</label><input type="text" placeholder="6:00 PM"></div>
+        </div>
+        <div class="input-group"><label class="input-label">Location</label><input type="text" placeholder="Building, room, or Remote"></div>
+        <div style="display:flex;gap:10px;">
+          <div class="input-group" style="flex:1;"><label class="input-label">Max members</label><select><option>4</option><option selected>6</option><option>8</option><option>10</option></select></div>
+          <div class="input-group" style="flex:1;"><label class="input-label">Visibility</label><select><option>Public</option><option>MSU only</option><option>Private</option></select></div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div class="section-label">Tags</div>
+          <div class="chips" style="flex-wrap:wrap;"><div class="chip on">ML</div><div class="chip on">Python</div><div class="chip">Deep Learning</div><div class="chip">NLP</div><div class="chip">Data Science</div><div class="chip">Exam Prep</div></div>
+        </div>
+        <button class="btn btn-primary" onclick="nav('s-detail')">Create group</button>
+      </div></div>
+    </div>
+
+    <!-- GROUP DETAIL -->
+    <div class="screen" id="s-detail">
+      <div style="height:44px;flex-shrink:0;"></div>
+      <div class="header-row">
+        <button class="back-btn" onclick="nav('s-browse')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Browse</button>
+        <div style="width:50px;text-align:right;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="cursor:pointer;color:var(--text2)"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg></div>
+      </div>
+      <div class="scroll-area"><div class="pad" style="padding-top:4px;">
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;"><div class="page-title" style="font-size:21px;flex:1;padding-right:8px;">CSE 404 · ML Study Group</div><span class="tag green">Open</span></div>
+          <div style="font-size:13px;color:var(--text2);">Led by Aditya S. · Created Feb 2025</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="stat-num">4</div><div class="stat-lbl">Members</div></div>
+          <div class="stat-card"><div class="stat-num">2</div><div class="stat-lbl">Spots left</div></div>
+          <div class="stat-card"><div class="stat-num">8</div><div class="stat-lbl">Sessions</div></div>
+        </div>
+        <div style="background:var(--surface3);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;">
+          <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="color:var(--text2)"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span style="font-size:12px;font-weight:600;color:var(--text2);">SCHEDULE</span></div>
+          <div style="font-size:13px;color:var(--text);">Tue / Thu &nbsp;·&nbsp; 6:00 – 8:00 PM</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px;">Engineering Building 1234 &nbsp;·&nbsp; Also on Discord</div>
+        </div>
+        <div style="margin-bottom:14px;"><div class="section-label">About</div><div style="font-size:13px;color:var(--text);line-height:1.6;">Weekly study group for CSE 404. We work through lecture slides, problem sets, and past exams. Focus on supervised learning, neural networks, and the final project.</div></div>
+        <div class="tags" style="margin-bottom:16px;"><span class="tag">Machine Learning</span><span class="tag">Python</span><span class="tag">Neural Networks</span></div>
+        <div class="divider"></div>
+        <div class="section-label">Members (4)</div>
+        <div class="member-row" onclick="nav('s-profile')"><div class="avatar av-amber">AS</div><div class="member-info"><div class="member-name">Aditya Singh</div><div class="member-sub">CSE Junior · Organizer</div></div><span class="tag green">Host</span></div>
+        <div class="member-row" onclick="nav('s-profile')"><div class="avatar av-blue">PG</div><div class="member-info"><div class="member-name">Prenov Gandhi</div><div class="member-sub">CSE Junior · Honors</div></div></div>
+        <div class="member-row"><div class="avatar av-green">MR</div><div class="member-info"><div class="member-name">Maya Rodriguez</div><div class="member-sub">Data Science Sophomore</div></div></div>
+        <div class="member-row"><div class="avatar av-amber" style="background:rgba(240,160,80,0.12);">JL</div><div class="member-info"><div class="member-name">James Lee</div><div class="member-sub">CSE Senior</div></div></div>
+        <div style="margin-top:18px;"><button class="btn btn-primary" onclick="nav('s-home')">Join group</button><button class="btn btn-outline">Message group</button></div>
+      </div></div>
+    </div>
+
+    <!-- EXPLORE -->
+    <div class="screen" id="s-explore">
+      <div style="height:44px;flex-shrink:0;"></div>
+      <div style="padding:12px 20px 0;flex-shrink:0;">
+        <div style="margin-bottom:14px;"><div class="page-title" style="font-size:22px;">Explore</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">Discover what MSU students are studying</div></div>
+        <div class="searchbar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.8"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Search topics, courses, majors...</div>
+      </div>
+      <div class="scroll-area"><div class="pad" style="padding-top:4px;">
+        <div class="section-label">Browse by department</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div class="explore-category" onclick="nav('s-browse')"><div class="explore-cat-icon" style="background:var(--accent-light);">💻</div><div class="explore-cat-title">Computer Science</div><div class="explore-cat-sub">24 active groups</div></div>
+          <div class="explore-category" onclick="nav('s-browse')"><div class="explore-cat-icon" style="background:rgba(61,184,122,0.15);">📐</div><div class="explore-cat-title">Mathematics</div><div class="explore-cat-sub">18 active groups</div></div>
+          <div class="explore-category" onclick="nav('s-browse')"><div class="explore-cat-icon" style="background:rgba(240,160,80,0.15);">⚗️</div><div class="explore-cat-title">Chemistry</div><div class="explore-cat-sub">12 active groups</div></div>
+          <div class="explore-category" onclick="nav('s-browse')"><div class="explore-cat-icon" style="background:rgba(224,85,85,0.15);">🔬</div><div class="explore-cat-title">Biology</div><div class="explore-cat-sub">9 active groups</div></div>
+          <div class="explore-category" onclick="nav('s-browse')"><div class="explore-cat-icon" style="background:rgba(168,100,255,0.15);">⚡</div><div class="explore-cat-title">Engineering</div><div class="explore-cat-sub">31 active groups</div></div>
+          <div class="explore-category" onclick="nav('s-browse')"><div class="explore-cat-icon" style="background:rgba(75,142,240,0.12);">📊</div><div class="explore-cat-title">Business</div><div class="explore-cat-sub">15 active groups</div></div>
+        </div>
+        <div class="section-label">Trending this week</div>
+        <div class="trending-card" onclick="nav('s-detail')"><div class="trending-rank">#1</div><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">Finals Season Prep</div><div style="font-size:12px;color:var(--text2);">Multiple departments · 42 members</div></div><span class="tag green">Hot</span></div>
+        <div class="trending-card" onclick="nav('s-detail')"><div class="trending-rank">#2</div><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">AI & ML Interest Group</div><div style="font-size:12px;color:var(--text2);">CSE · 28 members</div></div><span class="tag">Rising</span></div>
+        <div class="trending-card" onclick="nav('s-detail')"><div class="trending-rank">#3</div><div style="flex:1;"><div style="font-size:14px;font-weight:600;color:var(--text);">GRE / MCAT Boot Camp</div><div style="font-size:12px;color:var(--text2);">Pre-grad · 19 members</div></div><span class="tag">Rising</span></div>
+        <div class="section-label" style="margin-top:6px;">Suggested for you</div>
+        <div class="card" onclick="nav('s-detail')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="card-title">NLP Reading Group</div><span class="tag green">Open</span></div>
+          <div class="card-sub">Fri 4pm · Remote · Based on your CSE 404 interest</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div class="tags"><span class="tag">NLP</span><span class="tag">Research</span></div><button class="join-btn">Join</button></div>
+        </div>
+      </div></div>
+      <div class="bottomnav">
+        <button class="nav-item" onclick="nav('s-home')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" stroke="currentColor" stroke-width="1.8"/><path d="M9 21V12h6v9" stroke="currentColor" stroke-width="1.8"/></svg></div>Home</button>
+        <button class="nav-item" onclick="nav('s-browse')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg></div>Browse</button>
+        <button class="nav-item" onclick="nav('s-create')"><div class="nav-icon" style="width:36px;height:36px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>Create</button>
+        <button class="nav-item active" onclick="nav('s-explore')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>Explore</button>
+        <button class="nav-item" onclick="nav('s-profile')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>Profile</button>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="screen" id="s-profile">
+      <div style="height:44px;flex-shrink:0;"></div>
+      <div class="header-row">
+        <button class="back-btn" onclick="nav('s-home')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Back</button>
+        <div style="font-size:14px;font-weight:600;color:var(--text);">Profile</div>
+        <div style="font-size:13px;font-weight:500;color:var(--accent);cursor:pointer;">Edit</div>
+      </div>
+      <div class="scroll-area"><div class="pad" style="padding-top:4px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+          <div class="avatar av-blue" style="width:64px;height:64px;font-size:20px;font-weight:600;">PG</div>
+          <div>
+            <div style="font-size:19px;font-weight:600;color:var(--text);">Prenov Gandhi</div>
+            <div style="font-size:13px;color:var(--text2);margin-top:2px;">Computer Science · Junior</div>
+            <div style="font-size:12px;color:var(--text3);">prenov@msu.edu</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="stat-num">2</div><div class="stat-lbl">Groups</div></div>
+          <div class="stat-card"><div class="stat-num">14</div><div class="stat-lbl">Sessions</div></div>
+          <div class="stat-card"><div class="stat-num">4.8</div><div class="stat-lbl">Rating</div></div>
+        </div>
+        <div style="margin-bottom:14px;"><div class="section-label">Bio</div><div style="font-size:13px;color:var(--text);line-height:1.6;">CS junior in the Honors College. Into ML, mobile dev, and algorithms. Looking for focused study sessions, not just vibes.</div></div>
+        <div style="margin-bottom:16px;"><div class="section-label">Courses this semester</div><div class="tags"><span class="tag">CSE 404</span><span class="tag">CSE 476</span><span class="tag">CSE 331</span></div></div>
+        <div class="divider"></div>
+        <div class="section-label">My groups</div>
+        <div class="card" onclick="nav('s-detail')"><div class="card-title">CSE 404 · ML Study Group</div><div class="card-sub">Member since Feb 2025 · 8 sessions attended</div><div class="tags"><span class="tag">ML</span><span class="tag">Python</span></div></div>
+        <div class="card" onclick="nav('s-detail')"><div class="card-title">CSE 476 · Mobile Dev Crew</div><div class="card-sub">Member since Jan 2025 · 6 sessions attended</div><div class="tags"><span class="tag">Android</span></div></div>
+        <div class="divider"></div>
+        <div style="text-align:center;padding:8px 0 20px;"><div style="font-size:13px;color:var(--danger);cursor:pointer;" onclick="nav('s-login')">Sign out</div></div>
+      </div></div>
+      <div class="bottomnav">
+        <button class="nav-item" onclick="nav('s-home')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" stroke="currentColor" stroke-width="1.8"/><path d="M9 21V12h6v9" stroke="currentColor" stroke-width="1.8"/></svg></div>Home</button>
+        <button class="nav-item" onclick="nav('s-browse')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg></div>Browse</button>
+        <button class="nav-item" onclick="nav('s-create')"><div class="nav-icon" style="width:36px;height:36px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></div>Create</button>
+        <button class="nav-item" onclick="nav('s-explore')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></div>Explore</button>
+        <button class="nav-item active" onclick="nav('s-profile')"><div class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>Profile</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="display:flex;gap:7px;align-items:center;">
+    <div class="dot" data-screen="s-login" onclick="nav('s-login')"></div>
+    <div class="dot" data-screen="s-register" onclick="nav('s-register')"></div>
+    <div class="dot" data-screen="s-home" onclick="nav('s-home')"></div>
+    <div class="dot" data-screen="s-browse" onclick="nav('s-browse')"></div>
+    <div class="dot" data-screen="s-create" onclick="nav('s-create')"></div>
+    <div class="dot" data-screen="s-detail" onclick="nav('s-detail')"></div>
+    <div class="dot" data-screen="s-explore" onclick="nav('s-explore')"></div>
+    <div class="dot" data-screen="s-profile" onclick="nav('s-profile')"></div>
+  </div>
+  <div style="font-size:11px;color:rgba(0,0,0,0.3);font-family:'DM Sans',sans-serif;letter-spacing:0.3px;">SyncStart · MSU · Interactive Prototype</div>
+</div>
+
+<script>
+function nav(id) {
+  const current = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!next || current === next) return;
+  current.classList.add('exit');
+  setTimeout(() => current.classList.remove('active','exit'), 220);
+  next.classList.add('active');
+  document.querySelectorAll('.dot').forEach(d => d.classList.toggle('active', d.dataset.screen === id));
+}
+document.querySelector('.dot[data-screen="s-login"]').classList.add('active');
+</script>
+</body>
+</html>
